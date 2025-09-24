@@ -19,8 +19,22 @@ if uploaded_file:
     st.subheader("🔍 Data Preview")
     st.dataframe(df.head())
 
-    # Sidebar for user input
+    # Auto-detect column types
+    numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns.tolist()
+    categorical_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    # Sidebar: auto-suggest chart types
     st.sidebar.header("Visualization Settings")
+
+    if len(numeric_cols) > 0 and len(categorical_cols) > 0:
+        default_chart = "Bar Chart"
+    elif len(numeric_cols) > 1:
+        default_chart = "Scatter Plot"
+    elif len(numeric_cols) == 1:
+        default_chart = "Histogram"
+    else:
+        default_chart = "Pie Chart"
+
     chart_type = st.sidebar.selectbox(
         "Choose a chart type:",
         [
@@ -34,10 +48,22 @@ if uploaded_file:
             "Area Chart",
             "Violin Plot",
             "Pair Plot"
-        ]
+        ],
+        index=[
+            "Line Chart",
+            "Bar Chart",
+            "Scatter Plot",
+            "Pie Chart",
+            "Heatmap",
+            "Histogram",
+            "Box Plot",
+            "Area Chart",
+            "Violin Plot",
+            "Pair Plot"
+        ].index(default_chart)
     )
 
-    # Select columns
+    # Select X & Y columns dynamically
     columns = df.columns.tolist()
     x_axis = st.sidebar.selectbox("Select X-axis:", options=columns)
     y_axis = st.sidebar.selectbox("Select Y-axis:", options=columns)
@@ -54,12 +80,19 @@ if uploaded_file:
         st.plotly_chart(fig, use_container_width=True)
 
     elif chart_type == "Scatter Plot":
-        fig = px.scatter(df, x=x_axis, y=y_axis, color=df[columns[0]], title=f"{y_axis} vs {x_axis}")
+        # Only color if a categorical column exists
+        if categorical_cols:
+            fig = px.scatter(df, x=x_axis, y=y_axis, color=categorical_cols[0], title=f"{y_axis} vs {x_axis}")
+        else:
+            fig = px.scatter(df, x=x_axis, y=y_axis, title=f"{y_axis} vs {x_axis}")
         st.plotly_chart(fig, use_container_width=True)
 
     elif chart_type == "Pie Chart":
-        fig = px.pie(df, names=x_axis, values=y_axis, title=f"Pie Chart of {y_axis} by {x_axis}")
-        st.plotly_chart(fig, use_container_width=True)
+        if y_axis in numeric_cols:
+            fig = px.pie(df, names=x_axis, values=y_axis, title=f"Pie Chart of {y_axis} by {x_axis}")
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("Pie chart requires numeric values for 'values' (Y-axis).")
 
     elif chart_type == "Heatmap":
         fig, ax = plt.subplots(figsize=(8,6))
@@ -83,7 +116,7 @@ if uploaded_file:
         st.plotly_chart(fig, use_container_width=True)
 
     elif chart_type == "Pair Plot":
-        fig = sns.pairplot(df[columns[:4]])  # first 4 columns (avoid overload)
+        fig = sns.pairplot(df[numeric_cols[:4]])  # only numeric, limit to 4 cols
         st.pyplot(fig)
 
 else:
