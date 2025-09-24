@@ -23,7 +23,18 @@ if uploaded_file:
     st.sidebar.header("Visualization Settings")
     chart_type = st.sidebar.selectbox(
         "Choose a chart type:",
-        ["Line Chart", "Bar Chart", "Scatter Plot", "Pie Chart", "Heatmap"]
+        [
+            "Line Chart",
+            "Bar Chart",
+            "Scatter Plot",
+            "Pie Chart",
+            "Heatmap",
+            "Histogram",
+            "Box Plot",
+            "Area Chart",
+            "Violin Plot",
+            "Pair Plot"
+        ]
     )
 
     # Select columns
@@ -33,6 +44,7 @@ if uploaded_file:
 
     # Generate charts
     st.subheader(f"📈 {chart_type}")
+
     if chart_type == "Line Chart":
         fig = px.line(df, x=x_axis, y=y_axis, title=f"{y_axis} vs {x_axis}")
         st.plotly_chart(fig, use_container_width=True)
@@ -54,6 +66,25 @@ if uploaded_file:
         sns.heatmap(df.corr(), annot=True, cmap="coolwarm", ax=ax)
         st.pyplot(fig)
 
+    elif chart_type == "Histogram":
+        fig = px.histogram(df, x=x_axis, title=f"Histogram of {x_axis}")
+        st.plotly_chart(fig, use_container_width=True)
+
+    elif chart_type == "Box Plot":
+        fig = px.box(df, x=x_axis, y=y_axis, title=f"Box Plot of {y_axis} by {x_axis}")
+        st.plotly_chart(fig, use_container_width=True)
+
+    elif chart_type == "Area Chart":
+        fig = px.area(df, x=x_axis, y=y_axis, title=f"Area Chart of {y_axis} vs {x_axis}")
+        st.plotly_chart(fig, use_container_width=True)
+
+    elif chart_type == "Violin Plot":
+        fig = px.violin(df, x=x_axis, y=y_axis, box=True, points="all", title=f"Violin Plot of {y_axis} by {x_axis}")
+        st.plotly_chart(fig, use_container_width=True)
+
+    elif chart_type == "Pair Plot":
+        fig = sns.pairplot(df[columns[:4]])  # first 4 columns (avoid overload)
+        st.pyplot(fig)
+
 else:
     st.info("👆 Please upload a CSV file to begin.")
-
